@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trắc nghiệm Địa lý 12 - Vị trí địa lý & Thiên nhiên</title>
+    <style>
+        :root {
+            --primary-blue: #3b82f6;
+            --primary-blue-dark: #2563eb;
+            --success-green: #10b981;
+            --error-red: #ef4444;
+            --text-dark: #1e293b;
+            --text-light: #64748b;
+            --bg-glass: rgba(255, 255, 255, 0.65);
+            --border-glass: rgba(255, 255, 255, 0.8);
+            --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%);
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bg-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.6;
+            z-index: 0;
+            animation: float 15s infinite ease-in-out;
+        }
+        .blob-1 { width: 400px; height: 400px; background: #93c5fd; top: -100px; left: -100px; }
+        .blob-2 { width: 300px; height: 300px; background: #a5b4fc; bottom: -50px; right: -50px; animation-delay: -5s; }
+        .blob-3 { width: 250px; height: 250px; background: #bae6fd; top: 50%; left: 50%; transform: translate(-50%, -50%); animation-delay: -10s; }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -30px) scale(1.05); }
+            66% { transform: translate(-20px, 20px) scale(0.95); }
+        }
+
+        .app-container { width: 100%; max-width: 700px; position: relative; z-index: 1; }
+
+        .glass-card {
+            background: var(--bg-glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-glass);
+            border-radius: 28px;
+            box-shadow: var(--shadow-glass);
+            padding: 40px;
+        }
+
+        .progress-container { margin-bottom: 30px; }
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-light);
+        }
+        .progress-bar-bg {
+            width: 100%; height: 8px;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-blue), #60a5fa);
+            border-radius: 10px;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 0%;
+        }
+
+        .question-text {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-dark);
+            line-height: 1.5;
+            margin-bottom: 24px;
+            min-height: 60px;
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-bottom: 30px;
+        }
+
+        .option-btn {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.5);
+            border: 2px solid rgba(0, 0, 0, 0.05);
+            border-radius: 16px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 16px;
+            color: var(--text-dark);
+            transition: all 0.3s ease;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            transform: translateY(-2px) scale(1.01);
+            background: rgba(255, 255, 255, 0.8);
+            border-color: var(--primary-blue);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        }
+
+        .option-btn:disabled { cursor: not-allowed; }
+
+        .option-letter {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px; height: 32px;
+            background: #e2e8f0;
+            color: var(--text-dark);
+            font-weight: 700;
+            border-radius: 10px;
+            margin-right: 16px;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+
+        .option-btn.correct {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: var(--success-green);
+            color: #065f46;
+            animation: pulse-green 0.5s;
+        }
+        .option-btn.correct .option-letter { background: var(--success-green); color: white; }
+
+        .option-btn.wrong {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: var(--error-red);
+            color: #991b1b;
+            animation: shake 0.4s;
+        }
+        .option-btn.wrong .option-letter { background: var(--error-red); color: white; }
+
+        @keyframes pulse-green {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .btn-next {
+            width: 100%; padding: 16px;
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark));
+            color: white; border: none; border-radius: 16px;
+            font-size: 16px; font-weight: 700;
+            cursor: pointer; transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+            opacity: 0; transform: translateY(10px); pointer-events: none;
+        }
+        .btn-next.active { opacity: 1; transform: translateY(0); pointer-events: auto; }
+        .btn-next:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4); }
+
+        .result-screen { text-align: center; display: none; }
+        .result-screen.show { display: block; animation: fadeInUp 0.6s ease forwards; }
+
+        .result-icon { font-size: 64px; margin-bottom: 20px; }
+        .result-title { font-size: 28px; font-weight: 800; color: var(--text-dark); margin-bottom: 10px; }
+        .result-score {
+            font-size: 48px; font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-blue), #8b5cf6);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin: 20px 0;
+        }
+        .result-details {
+            display: flex; justify-content: center; gap: 30px;
+            margin-bottom: 30px; font-size: 16px; color: var(--text-light);
+        }
+        .detail-item span { display: block; font-size: 24px; font-weight: 700; color: var(--text-dark); margin-top: 4px; }
+
+        .btn-restart {
+            padding: 14px 40px; background: white; color: var(--primary-blue);
+            border: 2px solid var(--primary-blue); border-radius: 16px;
+            font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.3s ease;
+        }
+        .btn-restart:hover { background: var(--primary-blue); color: white; }
+
+        .fade-in-up { animation: fadeInUp 0.5s ease forwards; }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 600px) {
+            .glass-card { padding: 24px; border-radius: 20px; }
+            .question-text { font-size: 17px; }
+            .option-btn { padding: 14px 16px; font-size: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-blob blob-1"></div>
+    <div class="bg-blob blob-2"></div>
+    <div class="bg-blob blob-3"></div>
+
+    <div class="app-container">
+        <div class="glass-card">
+            <div id="quiz-screen">
+                <div class="progress-container">
+                    <div class="progress-info">
+                        <span id="progress-text">Câu 1 / 30</span>
+                        <span id="score-text">Điểm: 0</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" id="progress-fill"></div>
+                    </div>
+                </div>
+
+                <h2 class="question-text" id="question-text"></h2>
+                <div class="options-container" id="options-container"></div>
+                <button class="btn-next" id="btn-next" onclick="nextQuestion()">Câu tiếp theo &rarr;</button>
+            </div>
+
+            <div id="result-screen" class="result-screen">
+                <div class="result-icon">🏆</div>
+                <h2 class="result-title">Hoàn thành bài kiểm tra!</h2>
+                <div class="result-score" id="final-score">0%</div>
+                <div class="result-details">
+                    <div class="detail-item">Câu đúng <span id="final-correct" style="color: var(--success-green);">0</span></div>
+                    <div class="detail-item">Câu sai <span id="final-wrong" style="color: var(--error-red);">0</span></div>
+                </div>
+                <button class="btn-restart" onclick="restartQuiz()"> Làm lại bài (đảo câu)</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // === DỮ LIỆU GỐC (không bị thay đổi) ===
+        const ORIGINAL_QUIZ_DATA = [
+            { q: "Nước ta tiếp giáp vùng biển nhiệt đới rộng nên có", o: ["Nhiều loại khoáng sản kim loại", "Nhiều bão, áp thấp nhiệt đới", "Rừng ngập mặn ven biển rộng", "Địa hình ven biển khá đa dạng"], a: 1 },
+            { q: "Nước ta nằm trong khu vực có gió mùa nên có", o: ["Độ ẩm lớn, cân bằng ẩm âm quanh năm", "Chế độ nhiệt và mưa thay đổi theo mùa", "Nhiều thiên tai của vùng biển nhiệt đới", "Cảnh quan của vùng ôn đới rất đa dạng"], a: 1 },
+            { q: "Nước ta có vị trí nằm trong khu vực gió mùa điển hình trên thế giới nên có", o: ["Các thành phần tự nhiên thay đổi theo mùa", "Chế độ nhiệt phân hóa rõ theo không gian", "Nhiều thiên tai của vùng biển nhiệt đới ẩm", "Hệ sinh thái rừng nhiệt đới ẩm trên đá vôi"], a: 0 },
+            { q: "Nước ta nằm hoàn toàn giữa chí tuyến Bắc và xích đạo nên có", o: ["Tổng bức xạ lớn, cán cân bức xạ luôn âm", "Khí hậu diễn biến phức tạp, mưa mùa hạ", "Nền nhiệt độ cao, gió Mậu Dịch hoạt động", "Hai lần mặt trời lên thiên đỉnh, độ ẩm cao"], a: 2 },
+            { q: "Vùng đất của nước ta", o: ["Lớn hơn vùng biển nhiều lần", "Thu hẹp theo chiều bắc - nam", "Chỉ giáp biển về phía đông", "Gồm phần đất liền và hải đảo"], a: 3 },
+            { q: "Vùng đất của nước ta", o: ["Mở rộng đến hết nội thủy", "Thu hẹp theo chiều bắc - nam", "Có đường biên giới kéo dài", "Lớn hơn vùng biển nhiều lần"], a: 2 },
+            { q: "Nhận định nào dưới đây không đúng về lãnh hải nước ta?", o: ["Có chiều rộng 12 hải lí", "Thuộc chủ quyền quốc gia trên biển", "Có độ sâu khoảng 200m", "Được coi là đường biên giới trên biển"], a: 2 },
+            { q: "Đường biên giới trên đất liền của nước ta kéo dài, gây khó khăn cho việc", o: ["Phát triển nền văn hóa", "Thu hút đầu tư nước ngoài", "Khai thác nguồn khoáng sản", "Bảo vệ chủ quyền lãnh thổ"], a: 3 },
+            { q: "Lãnh thổ nước ta", o: ["Có vùng đất gấp nhiều lần vùng biển", "Nằm hoàn toàn ở trong vùng xích đạo", "Có đường bờ biển dài từ bắc vào nam", "Chỉ tiếp giáp với các quốc gia trên biển"], a: 2 },
+            { q: "Ý nghĩa kinh tế của vị trí địa lý nước ta là", o: ["Tự nhiên phân hóa đa dạng giữa Bắc - Nam, Đông - Tây", "Nguồn tài nguyên sinh vật và khoáng sản vô cùng giàu có", "Thuận lợi giao lưu với các nước trong khu vực và thế giới", "Thuận lợi để xây dựng nền văn hóa tương đồng với khu vực"], a: 2 },
+            { q: "Phát biểu nào sau đây không đúng với khí hậu Việt Nam?", o: ["Khí hậu có sự phân hoá đa dạng", "Khí hậu mang tính chất nhiệt đới", "Mùa đông lạnh kéo dài 2 - 3 tháng", "Chịu tác động sâu sắc của gió mùa"], a: 2 },
+            { q: "Gió mùa Đông Bắc ở nước ta xuất phát từ", o: ["Trung tâm áp cao Xibia", "Trung tâm áp cao Bắc Ấn Độ Dương", "Trung tâm áp cao Hawaii", "Trung tâm áp cao chí tuyến bán cầu Nam"], a: 0 },
+            { q: "Ở nước ta quá trình feralit diễn ra mạnh ở vùng", o: ["Núi cao", "Đồi núi thấp", "Núi trung bình", "Đồng bằng ven biển"], a: 1 },
+            { q: "Do tác động của gió mùa Đông Bắc nên nửa đầu mùa đông ở miền Bắc nước ta thường có kiểu thời tiết", o: ["Lạnh, ẩm", "Ấm, ẩm", "Lạnh, khô", "Ấm, khô"], a: 2 },
+            { q: "Nhịp điệu dòng chảy của sông ngòi nước ta theo sát", o: ["Hướng các dòng sông", "Hướng các dãy núi", "Chế độ nhiệt", "Chế độ mưa"], a: 3 },
+            { q: "Gió mùa mùa hạ hoạt động ở đồng bằng Bắc Bộ có hướng chủ yếu là", o: ["Tây nam", "Đông nam", "Đông bắc", "Tây bắc"], a: 1 },
+            { q: "Tính chất nhiệt đới của khí hậu nước ta được quyết định bởi", o: ["Ảnh hưởng của biển Đông rộng lớn", "Ảnh hưởng sâu sắc hoàn lưu gió mùa", "Vị trí nằm trong vùng nội chí tuyến", "Chuyển động biểu kiến của Mặt Trời"], a: 2 },
+            { q: "Đất feralit ở nước ta có màu đỏ vàng chủ yếu do", o: ["Quá trình tích tụ mùn mạnh", "Rửa trôi các chất badơ dễ tan", "Tích tụ ôxit sắt và ôxit nhôm", "Quá trình phong hóa mạnh mẽ"], a: 2 },
+            { q: "Phát biểu nào sau đây là biểu hiện của thiên nhiên nhiệt đới ẩm gió mùa ở nước ta?", o: ["Cán cân bức xạ quanh năm âm", "Sinh vật cận nhiệt đới chiếm ưu thế", "Xâm thực mạnh ở miền đồi núi", "Chế độ nước sông không phân mùa"], a: 2 },
+            { q: "Hệ sinh thái rừng nguyên sinh đặc trưng cho khí hậu nóng ẩm của nước ta là", o: ["Rừng thưa nhiệt đới khô rụng lá theo mùa", "Rừng nhiệt đới gió mùa nửa rụng lá", "Rừng rậm nhiệt đới ẩm lá rộng thường xanh", "Rừng nhiệt đới gió mùa thường xanh"], a: 2 },
+            { q: "Vào mùa đông, gió mùa Đông Bắc ở miền Bắc nước ta thổi xen kẽ với", o: ["Gió Tây ôn đới", "Tín phong bán cầu Bắc", "Phơn Tây Nam", "Tín phong bán cầu Nam"], a: 1 },
+            { q: "Sự phân mùa của khí hậu nước ta do nguyên nhân chủ yếu nào sau đây?", o: ["Bức xạ từ Mặt Trời tới", "Hai lần Mặt Trời lên thiên đỉnh", "Hoạt động của gió mùa", "Sự phân bố lượng mưa theo mùa"], a: 2 },
+            { q: "Nguyên nhân chính tạo nên mùa khô ở Nam Trung Bộ và Nam Bộ là", o: ["Gió Tây khô nóng", "Gió mùa Tây Nam", "Gió Tín phong bán cầu Bắc", "Áp thấp nhiệt đới"], a: 2 },
+            { q: "Biểu hiện của quá trình phong hóa hóa học làm biến đổi bề mặt địa hình nước ta là", o: ["Hiện tượng xâm thực", "Hình thành địa hình cacxtơ", "Hiện tượng bào mòn, rửa trôi", "Đất trượt, đá lở ở sườn dốc"], a: 1 },
+            { q: "Từ Đà Nẵng trở vào Nam của nước ta có một mùa khô sâu sắc chủ yếu do tác động của", o: ["Tín phong bán cầu Bắc", "Gió phơn Tây Nam", "Gió mùa Đông Nam", "Gió thổi từ Xibia về"], a: 0 },
+            { q: "Phát biểu nào sau đây không đúng với gió mùa Đông Bắc ở nước ta?", o: ["Hầu như kết thúc ở dãy Bạch Mã", "Chỉ hoạt động ở miền Bắc", "Tạo nên mùa đông lạnh ở miền Bắc", "Thổi liên tục suốt mùa đông"], a: 3 },
+            { q: "Nước ta có đặc điểm thiên nhiên nhiệt đới do", o: ["Nằm hoàn toàn ở trong vùng nội chí tuyến", "Chịu tác động thường xuyên của Tín phong", "Ở khu vực hoạt động của gió mùa châu Á", "Giáp Biển Đông thông ra Thái Bình Dương"], a: 0 },
+            { q: "Nước ta nằm trong khu vực gió mùa, nên thiên nhiên trên cả nước có đặc điểm rõ nét là", o: ["Chịu ảnh hưởng sâu sắc của biển", "Thực vật bốn mùa đều đa dạng", "Trong năm có mùa mưa và mùa khô", "Nhiệt ẩm dồi dào và phân mùa"], a: 2 },
+            { q: "Hằng năm, lãnh thổ nước ta nhận được lượng bức xạ mặt trời lớn là do", o: ["Góc nhập xạ lớn và có hai lần Mặt Trời lên thiên đỉnh", "Góc nhập xạ lớn và thời gian chiếu sáng kéo dài", "Góc nhập xạ lớn và giáp biển Đông rộng lớn", "Góc nhập xạ lớn và hoạt động của gió mùa"], a: 0 },
+            { q: "Hậu quả của quá trình xâm thực mạnh gây ra ở miền núi là", o: ["Tạo thành nhiều phụ lưu", "Tạo nên các cao nguyên lớn", "Địa hình cắt xẻ, rửa trôi", "Tạo thành dạng địa hình mới"], a: 2 }
+        ];
+
+        // === STATE ===
+        let quizData = []; // Dữ liệu đã được xáo trộn
+        let currentQuestion = 0;
+        let score = 0;
+        let answered = false;
+
+        // === DOM ===
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const btnNext = document.getElementById('btn-next');
+        const progressText = document.getElementById('progress-text');
+        const scoreText = document.getElementById('score-text');
+        const progressFill = document.getElementById('progress-fill');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultScreen = document.getElementById('result-screen');
+
+        // === THUẬT TOÁN SHUFFLE (Fisher-Yates) ===
+        function shuffleArray(array) {
+            const arr = [...array]; // Clone để không ảnh hưởng mảng gốc
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        // === KHỞI TẠO QUIZ: Xáo trộn câu hỏi + xáo trộn đáp án trong mỗi câu ===
+        function initQuiz() {
+            // 1. Xáo trộn thứ tự câu hỏi
+            const shuffledQuestions = shuffleArray(ORIGINAL_QUIZ_DATA);
+
+            // 2. Với mỗi câu, xáo trộn thứ tự đáp án và cập nhật lại index đáp án đúng
+            quizData = shuffledQuestions.map(q => {
+                // Tạo mảng các đáp án kèm index gốc
+                const optionsWithIndex = q.o.map((text, idx) => ({ text, originalIndex: idx }));
+                const shuffledOptions = shuffleArray(optionsWithIndex);
+
+                // Tìm vị trí mới của đáp án đúng
+                const newCorrectIndex = shuffledOptions.findIndex(opt => opt.originalIndex === q.a);
+
+                return {
+                    q: q.q,
+                    o: shuffledOptions.map(opt => opt.text),
+                    a: newCorrectIndex
+                };
+            });
+
+            currentQuestion = 0;
+            score = 0;
+        }
+
+        // === HIỂN THỊ CÂU HỎI ===
+        function loadQuestion() {
+            answered = false;
+            btnNext.classList.remove('active');
+
+            const data = quizData[currentQuestion];
+
+            progressText.innerText = `Câu ${currentQuestion + 1} / ${quizData.length}`;
+            scoreText.innerText = `Điểm: ${score}`;
+            progressFill.style.width = `${((currentQuestion) / quizData.length) * 100}%`;
+
+            questionText.classList.remove('fade-in-up');
+            void questionText.offsetWidth;
+            questionText.classList.add('fade-in-up');
+            questionText.innerText = `${currentQuestion + 1}. ${data.q}`;
+
+            optionsContainer.innerHTML = '';
+            const letters = ['A', 'B', 'C', 'D'];
+
+            data.o.forEach((option, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn fade-in-up';
+                btn.style.animationDelay = `${index * 0.05}s`;
+                btn.innerHTML = `<span class="option-letter">${letters[index]}</span> ${option}`;
+                btn.onclick = () => selectOption(index, btn);
+                optionsContainer.appendChild(btn);
+            });
+
+            btnNext.innerText = currentQuestion === quizData.length - 1 ? 'Xem kết quả 🎉' : 'Câu tiếp theo →';
+        }
+
+        // === CHỌN ĐÁP ÁN ===
+        function selectOption(index, btn) {
+            if (answered) return;
+            answered = true;
+
+            const correctIndex = quizData[currentQuestion].a;
+            const allOptions = document.querySelectorAll('.option-btn');
+
+            allOptions.forEach(opt => opt.disabled = true);
+
+            if (index === correctIndex) {
+                btn.classList.add('correct');
+                score++;
+                scoreText.innerText = `Điểm: ${score}`;
+            } else {
+                btn.classList.add('wrong');
+                allOptions[correctIndex].classList.add('correct');
+            }
+
+            btnNext.classList.add('active');
+        }
+
+        // === CÂU TIẾP THEO ===
+        function nextQuestion() {
+            currentQuestion++;
+            if (currentQuestion < quizData.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        // === KẾT QUẢ ===
+        function showResults() {
+            quizScreen.style.display = 'none';
+            resultScreen.classList.add('show');
+
+            const percentage = Math.round((score / quizData.length) * 100);
+            document.getElementById('final-score').innerText = `${percentage}%`;
+            document.getElementById('final-correct').innerText = score;
+            document.getElementById('final-wrong').innerText = quizData.length - score;
+
+            progressFill.style.width = `100%`;
+        }
+
+        // === LÀM LẠI (Xáo trộn lại) ===
+        function restartQuiz() {
+            initQuiz(); // Gọi lại hàm xáo trộn
+            quizScreen.style.display = 'block';
+            resultScreen.classList.remove('show');
+            loadQuestion();
+        }
+
+        // === KHỞI ĐỘNG LẦN ĐẦU ===
+        initQuiz();
+        loadQuestion();
+    </script>
+</body>
+</html>
